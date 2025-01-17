@@ -1,0 +1,593 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "API de gesti\xF3n de libros"
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BookManagementUserPool
+      AliasAttributes:
+      - email
+      AutoVerifiedAttributes:
+      - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+    Metadata:
+      SamResourceId: UserPool
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BookManagementClient
+      UserPoolId:
+        Ref: UserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+    Metadata:
+      SamResourceId: UserPoolClient
+  BooksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Books
+      AttributeDefinitions:
+      - AttributeName: bookId
+        AttributeType: S
+      - AttributeName: genre
+        AttributeType: S
+      KeySchema:
+      - AttributeName: bookId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: GenreIndex
+        KeySchema:
+        - AttributeName: genre
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+    Metadata:
+      SamResourceId: BooksTable
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolId:
+              Ref: UserPool
+    Metadata:
+      SamResourceId: ApiGateway
+  AuthorsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Authors
+      AttributeDefinitions:
+      - AttributeName: authorId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: authorId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+    Metadata:
+      SamResourceId: AuthorsTable
+  GenresTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Genres
+      AttributeDefinitions:
+      - AttributeName: genreId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: genreId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+    Metadata:
+      SamResourceId: GenresTable
+  StateMachineExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: states.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: StepFunctionsInvokeLambdaPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            Resource:
+            - Fn::GetAtt:
+              - CheckAuthorFunction
+              - Arn
+            - Fn::GetAtt:
+              - CheckGenresFunction
+              - Arn
+            - Fn::GetAtt:
+              - CreateBookFunction
+              - Arn
+    Metadata:
+      SamResourceId: StateMachineExecutionRole
+  CheckGenresFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/checkGenres.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: CheckGenresFunction
+  CheckAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/createAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: CheckAuthorFunction
+  CreateBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/createBook.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: CreateBookFunction
+  BookCreationStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn:
+        Fn::GetAtt:
+        - StateMachineExecutionRole
+        - Arn
+      DefinitionString:
+        Fn::Sub: "{\n  \"Comment\": \"Flujo de trabajo para crear un libro\",\n  \"\
+          StartAt\": \"CheckAuthor\",\n  \"States\": {\n    \"CheckAuthor\": {\n \
+          \     \"Type\": \"Task\",\n      \"Resource\": \"${CheckAuthorFunction.Arn}\"\
+          ,\n      \"Next\": \"CheckGenres\"\n    },\n    \"CheckGenres\": {\n   \
+          \   \"Type\": \"Task\",\n      \"Resource\": \"${CheckGenresFunction.Arn}\"\
+          ,\n      \"Next\": \"CreateBook\"\n    },\n    \"CreateBook\": {\n     \
+          \ \"Type\": \"Task\",\n      \"Resource\": \"${CreateBookFunction.Arn}\"\
+          ,\n      \"End\": true\n    }\n  }\n}\n"
+    Metadata:
+      SamResourceId: BookCreationStateMachine
+  GetBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/getBook.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetBookFunction
+  GetAllBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/listBooks.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetAllBookFunction
+  UpdateBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/updateBook.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: UpdateBookFunction
+  DeleteBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/deleteBook.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: delete
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: DeleteBookFunction
+  DeleteMultipleBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/deleteBooks.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: delete
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: DeleteMultipleBookFunction
+  CreateAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/createAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors
+            Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: CreateAuthorFunction
+  GetAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/getAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetAuthorFunction
+  GetAllAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/listAuthors.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetAllAuthorFunction
+  UpdateAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/updateAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: UpdateAuthorFunction
+  DeleteAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/deleteAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: delete
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: DeleteAuthorFunction
+  CreateGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/createGenre.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres
+            Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: CreateGenreFunction
+  GetGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/getGenre.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetGenreFunction
+  GetAllGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/listGenres.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: GetAllGenreFunction
+  UpdateGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/updateGenre.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: UpdateGenreFunction
+  DeleteGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/deleteGenre.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: delete
+            Auth:
+              Authorizer: CognitoAuthorizer
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-9ohc12oivjeo/c69afe8cd604f9d77fec677b71d79120
+    Metadata:
+      SamResourceId: DeleteGenreFunction
+Outputs:
+  ApiGatewayUrl:
+    Value:
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/api/

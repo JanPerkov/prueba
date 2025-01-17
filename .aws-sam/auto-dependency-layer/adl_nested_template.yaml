@@ -1,0 +1,274 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS SAM CLI Nested Stack for Auto Dependency Layer Creation
+Metadata:
+  SamCliInfo: 1.132.0
+  key: AWS SAM CLI sync command
+Outputs:
+  CheckAuthorFunctionfc72e75dDepLayer:
+    Value:
+      Ref: CheckAuthorFunctionfc72e75dDepLayer
+  CheckGenresFunction6ba65b32DepLayer:
+    Value:
+      Ref: CheckGenresFunction6ba65b32DepLayer
+  CreateAuthorFunctionfe748253DepLayer:
+    Value:
+      Ref: CreateAuthorFunctionfe748253DepLayer
+  CreateBookFunctione480892fDepLayer:
+    Value:
+      Ref: CreateBookFunctione480892fDepLayer
+  CreateGenreFunctioncc210cbcDepLayer:
+    Value:
+      Ref: CreateGenreFunctioncc210cbcDepLayer
+  DeleteAuthorFunctionc75e3510DepLayer:
+    Value:
+      Ref: DeleteAuthorFunctionc75e3510DepLayer
+  DeleteBookFunction60a79061DepLayer:
+    Value:
+      Ref: DeleteBookFunction60a79061DepLayer
+  DeleteGenreFunction6c02513aDepLayer:
+    Value:
+      Ref: DeleteGenreFunction6c02513aDepLayer
+  DeleteMultipleBookFunction77cb9187DepLayer:
+    Value:
+      Ref: DeleteMultipleBookFunction77cb9187DepLayer
+  GetAllAuthorFunctiond77fd901DepLayer:
+    Value:
+      Ref: GetAllAuthorFunctiond77fd901DepLayer
+  GetAllBookFunction0792057eDepLayer:
+    Value:
+      Ref: GetAllBookFunction0792057eDepLayer
+  GetAllGenreFunction1449cd64DepLayer:
+    Value:
+      Ref: GetAllGenreFunction1449cd64DepLayer
+  GetAuthorFunction86709db7DepLayer:
+    Value:
+      Ref: GetAuthorFunction86709db7DepLayer
+  GetBookFunction9f08143eDepLayer:
+    Value:
+      Ref: GetBookFunction9f08143eDepLayer
+  GetGenreFunctionb64c0ff3DepLayer:
+    Value:
+      Ref: GetGenreFunctionb64c0ff3DepLayer
+  SomeOtherFunctionf2e51c33DepLayer:
+    Value:
+      Ref: SomeOtherFunctionf2e51c33DepLayer
+  UpdateAuthorFunction79449371DepLayer:
+    Value:
+      Ref: UpdateAuthorFunction79449371DepLayer
+  UpdateBookFunction79658623DepLayer:
+    Value:
+      Ref: UpdateBookFunction79658623DepLayer
+  UpdateGenreFunctionf35df6a8DepLayer:
+    Value:
+      Ref: UpdateGenreFunctionf35df6a8DepLayer
+Resources:
+  CheckAuthorFunctionfc72e75dDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\CheckAuthorFunctionfc72e75dDepLayer
+      Description: Auto created layer for dependencies of function CheckAuthorFunction
+      LayerName: prueba296080775-CheckAuthorFunctionfc72e75d-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  CheckGenresFunction6ba65b32DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\CheckGenresFunction6ba65b32DepLayer
+      Description: Auto created layer for dependencies of function CheckGenresFunction
+      LayerName: prueba296080775-CheckGenresFunction6ba65b32-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  CreateAuthorFunctionfe748253DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\CreateAuthorFunctionfe748253DepLayer
+      Description: Auto created layer for dependencies of function CreateAuthorFunction
+      LayerName: prueba296080775-CreateAuthorFunctionfe748253-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  CreateBookFunctione480892fDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\CreateBookFunctione480892fDepLayer
+      Description: Auto created layer for dependencies of function CreateBookFunction
+      LayerName: prueba296080775-CreateBookFunctione480892f-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  CreateGenreFunctioncc210cbcDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\CreateGenreFunctioncc210cbcDepLayer
+      Description: Auto created layer for dependencies of function CreateGenreFunction
+      LayerName: prueba296080775-CreateGenreFunctioncc210cbc-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  DeleteAuthorFunctionc75e3510DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\DeleteAuthorFunctionc75e3510DepLayer
+      Description: Auto created layer for dependencies of function DeleteAuthorFunction
+      LayerName: prueba296080775-DeleteAuthorFunctionc75e3510-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  DeleteBookFunction60a79061DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\DeleteBookFunction60a79061DepLayer
+      Description: Auto created layer for dependencies of function DeleteBookFunction
+      LayerName: prueba296080775-DeleteBookFunction60a79061-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  DeleteGenreFunction6c02513aDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\DeleteGenreFunction6c02513aDepLayer
+      Description: Auto created layer for dependencies of function DeleteGenreFunction
+      LayerName: prueba296080775-DeleteGenreFunction6c02513a-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  DeleteMultipleBookFunction77cb9187DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\DeleteMultipleBookFunction77cb9187DepLayer
+      Description: Auto created layer for dependencies of function DeleteMultipleBookFunction
+      LayerName: prueba296080775-DeleteMultipleBookFunc77cb9187-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetAllAuthorFunctiond77fd901DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetAllAuthorFunctiond77fd901DepLayer
+      Description: Auto created layer for dependencies of function GetAllAuthorFunction
+      LayerName: prueba296080775-GetAllAuthorFunctiond77fd901-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetAllBookFunction0792057eDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetAllBookFunction0792057eDepLayer
+      Description: Auto created layer for dependencies of function GetAllBookFunction
+      LayerName: prueba296080775-GetAllBookFunction0792057e-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetAllGenreFunction1449cd64DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetAllGenreFunction1449cd64DepLayer
+      Description: Auto created layer for dependencies of function GetAllGenreFunction
+      LayerName: prueba296080775-GetAllGenreFunction1449cd64-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetAuthorFunction86709db7DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetAuthorFunction86709db7DepLayer
+      Description: Auto created layer for dependencies of function GetAuthorFunction
+      LayerName: prueba296080775-GetAuthorFunction86709db7-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetBookFunction9f08143eDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetBookFunction9f08143eDepLayer
+      Description: Auto created layer for dependencies of function GetBookFunction
+      LayerName: prueba296080775-GetBookFunction9f08143e-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  GetGenreFunctionb64c0ff3DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\GetGenreFunctionb64c0ff3DepLayer
+      Description: Auto created layer for dependencies of function GetGenreFunction
+      LayerName: prueba296080775-GetGenreFunctionb64c0ff3-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  SomeOtherFunctionf2e51c33DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\SomeOtherFunctionf2e51c33DepLayer
+      Description: Auto created layer for dependencies of function SomeOtherFunction
+      LayerName: prueba296080775-SomeOtherFunctionf2e51c33-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  UpdateAuthorFunction79449371DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\UpdateAuthorFunction79449371DepLayer
+      Description: Auto created layer for dependencies of function UpdateAuthorFunction
+      LayerName: prueba296080775-UpdateAuthorFunction79449371-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  UpdateBookFunction79658623DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\UpdateBookFunction79658623DepLayer
+      Description: Auto created layer for dependencies of function UpdateBookFunction
+      LayerName: prueba296080775-UpdateBookFunction79658623-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  UpdateGenreFunctionf35df6a8DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - nodejs18.x
+      ContentUri: C:\repositoriosgit\Nueva carpeta (2)\PRUEBA-JAN\.aws-sam\auto-dependency-layer\UpdateGenreFunctionf35df6a8DepLayer
+      Description: Auto created layer for dependencies of function UpdateGenreFunction
+      LayerName: prueba296080775-UpdateGenreFunctionf35df6a8-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+Transform: AWS::Serverless-2016-10-31

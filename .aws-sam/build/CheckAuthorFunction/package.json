@@ -1,0 +1,19 @@
+{
+    "name": "delete-test-01",
+    "description": "delete-test-01-description",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.188.0",
+        "@aws-sdk/lib-dynamodb": "^3.188.0",
+        "ajv": "^8.17.1",
+        "aws-sdk": "^2.1692.0",
+        "uuid": "^11.0.5"
+    },
+    "devDependencies": {
+        "aws-sdk-client-mock": "^2.0.0"
+    },
+    "scripts": {
+        "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    }
+}

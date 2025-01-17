@@ -1,0 +1,522 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "API de gesti\xF3n de libros"
+Resources:
+  BooksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Books
+      AttributeDefinitions:
+      - AttributeName: bookId
+        AttributeType: S
+      - AttributeName: genre
+        AttributeType: S
+      KeySchema:
+      - AttributeName: bookId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: GenreIndex
+        KeySchema:
+        - AttributeName: genre
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+  AuthorsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Authors
+      AttributeDefinitions:
+      - AttributeName: authorId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: authorId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  GenresTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Genres
+      AttributeDefinitions:
+      - AttributeName: genreId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: genreId
+        KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+  StateMachineExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: states.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: StepFunctionsInvokeLambdaPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            Resource:
+            - Fn::GetAtt:
+              - CheckAuthorFunction
+              - Arn
+            - Fn::GetAtt:
+              - CheckGenresFunction
+              - Arn
+            - Fn::GetAtt:
+              - CreateBookFunction
+              - Arn
+  CheckGenresFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/checkGenres.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      CodeUri: CheckGenresFunction
+    Metadata:
+      SamResourceId: CheckGenresFunction
+  CheckAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/createAuthor.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      CodeUri: CheckAuthorFunction
+    Metadata:
+      SamResourceId: CheckAuthorFunction
+  CreateBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/createBook.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+          STATE_MACHINE_ARN:
+            Fn::ImportValue: StateMachineArn
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: post
+      CodeUri: CreateBookFunction
+    Metadata:
+      SamResourceId: CreateBookFunction
+  BookCreationStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn:
+        Fn::GetAtt:
+        - StateMachineExecutionRole
+        - Arn
+      DefinitionString:
+        Fn::Sub: "{\n  \"Comment\": \"Flujo de trabajo para crear un libro\",\n  \"\
+          StartAt\": \"CheckAuthor\",\n  \"States\": {\n    \"CheckAuthor\": {\n \
+          \     \"Type\": \"Task\",\n      \"Resource\": \"${CheckAuthorFunction.Arn}\"\
+          ,\n      \"Next\": \"CheckGenres\"\n    },\n    \"CheckGenres\": {\n   \
+          \   \"Type\": \"Task\",\n      \"Resource\": \"${CheckGenresFunction.Arn}\"\
+          ,\n      \"Next\": \"CreateBook\"\n    },\n    \"CreateBook\": {\n     \
+          \ \"Type\": \"Task\",\n      \"Resource\": \"${CreateBookFunction.Arn }\"\
+          ,\n      \"End\": true\n    }\n  }\n}\n"
+  GetBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/getBook.handler
+      Runtime: nodejs18.x
+      CodeUri: GetBookFunction
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: get
+    Metadata:
+      SamResourceId: GetBookFunction
+  GetAllBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/listBooks.handler
+      Runtime: nodejs18.x
+      CodeUri: GetAllBookFunction
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: get
+    Metadata:
+      SamResourceId: GetAllBookFunction
+  UpdateBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/updateBook.handler
+      Runtime: nodejs18.x
+      CodeUri: UpdateBookFunction
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: put
+    Metadata:
+      SamResourceId: UpdateBookFunction
+  DeleteBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/deleteBook.handler
+      Runtime: nodejs18.x
+      CodeUri: DeleteBookFunction
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books/{bookId}
+            Method: delete
+    Metadata:
+      SamResourceId: DeleteBookFunction
+  DeleteMultipleBookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/book/deleteBooks.handler
+      Runtime: nodejs18.x
+      CodeUri: DeleteMultipleBookFunction
+      Environment:
+        Variables:
+          BOOKS_TABLE:
+            Ref: BooksTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BooksTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /books
+            Method: delete
+    Metadata:
+      SamResourceId: DeleteMultipleBookFunction
+  CreateAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/createAuthor.handler
+      Runtime: nodejs18.x
+      CodeUri: CreateAuthorFunction
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors
+            Method: post
+    Metadata:
+      SamResourceId: CreateAuthorFunction
+  GetAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/getAuthor.handler
+      Runtime: nodejs18.x
+      CodeUri: GetAuthorFunction
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: get
+    Metadata:
+      SamResourceId: GetAuthorFunction
+  GetAllAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/listAuthors.handler
+      Runtime: nodejs18.x
+      CodeUri: GetAllAuthorFunction
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors
+            Method: get
+    Metadata:
+      SamResourceId: GetAllAuthorFunction
+  UpdateAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/updateAuthor.handler
+      Runtime: nodejs18.x
+      CodeUri: UpdateAuthorFunction
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: put
+    Metadata:
+      SamResourceId: UpdateAuthorFunction
+  DeleteAuthorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/author/deleteAuthor.handler
+      Runtime: nodejs18.x
+      CodeUri: DeleteAuthorFunction
+      Environment:
+        Variables:
+          AUTHORS_TABLE:
+            Ref: AuthorsTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: AuthorsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /authors/{authorId}
+            Method: delete
+    Metadata:
+      SamResourceId: DeleteAuthorFunction
+  CreateGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/createGenre.handler
+      Runtime: nodejs18.x
+      CodeUri: CreateGenreFunction
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres
+            Method: post
+    Metadata:
+      SamResourceId: CreateGenreFunction
+  GetGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/getGenre.handler
+      Runtime: nodejs18.x
+      CodeUri: GetGenreFunction
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: get
+    Metadata:
+      SamResourceId: GetGenreFunction
+  GetAllGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/listGenres.handler
+      Runtime: nodejs18.x
+      CodeUri: GetAllGenreFunction
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres
+            Method: get
+    Metadata:
+      SamResourceId: GetAllGenreFunction
+  UpdateGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/updateGenre.handler
+      Runtime: nodejs18.x
+      CodeUri: UpdateGenreFunction
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: put
+    Metadata:
+      SamResourceId: UpdateGenreFunction
+  DeleteGenreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/genre/deleteGenre.handler
+      Runtime: nodejs18.x
+      CodeUri: DeleteGenreFunction
+      Environment:
+        Variables:
+          GENRES_TABLE:
+            Ref: GenresTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: GenresTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGateway
+            Path: /genres/{genreId}
+            Method: delete
+    Metadata:
+      SamResourceId: DeleteGenreFunction
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+Outputs:
+  StateMachineArnOutput:
+    Value:
+      Fn::GetAtt:
+      - BookCreationStateMachine
+      - Arn
+    Description: "ARN de la m\xE1quina de estado"
+  ApiGatewayUrl:
+    Value:
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/api/
