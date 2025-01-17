@@ -113,8 +113,6 @@ Resources:
         Variables:
           BOOKS_TABLE:
             Ref: BooksTable
-          STATE_MACHINE_ARN:
-            Fn::ImportValue: StateMachineArn
       Policies:
       - DynamoDBCrudPolicy:
           TableName:

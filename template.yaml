@@ -104,7 +104,6 @@ Resources:
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
-          STATE_MACHINE_ARN: !ImportValue StateMachineArn
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref BooksTable
@@ -148,7 +147,6 @@ Resources:
     Properties:
       Handler: src/handlers/book/getBook.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/book/
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
@@ -168,7 +166,6 @@ Resources:
     Properties:
       Handler: src/handlers/book/listBooks.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/book/
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
@@ -188,7 +185,6 @@ Resources:
     Properties:
       Handler: src/handlers/book/updateBook.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/book/
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
@@ -208,7 +204,6 @@ Resources:
     Properties:
       Handler: src/handlers/book/deleteBook.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/book/
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
@@ -228,7 +223,6 @@ Resources:
     Properties:
       Handler: src/handlers/book/deleteBooks.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/book/
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
@@ -248,7 +242,6 @@ Resources:
     Properties:
       Handler: src/handlers/author/createAuthor.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/author/
       Environment:
         Variables:
           AUTHORS_TABLE: !Ref AuthorsTable
@@ -268,7 +261,6 @@ Resources:
     Properties:
       Handler: src/handlers/author/getAuthor.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/author/
       Environment:
         Variables:
           AUTHORS_TABLE: !Ref AuthorsTable
@@ -288,7 +280,6 @@ Resources:
     Properties:
       Handler: src/handlers/author/listAuthors.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/author/
       Environment:
         Variables:
           AUTHORS_TABLE: !Ref AuthorsTable
@@ -308,7 +299,6 @@ Resources:
     Properties:
       Handler: src/handlers/author/updateAuthor.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/author/
       Environment:
         Variables:
           AUTHORS_TABLE: !Ref AuthorsTable
@@ -328,7 +318,6 @@ Resources:
     Properties:
       Handler: src/handlers/author/deleteAuthor.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/author/
       Environment:
         Variables:
           AUTHORS_TABLE: !Ref AuthorsTable
@@ -348,7 +337,6 @@ Resources:
     Properties:
       Handler: src/handlers/genre/createGenre.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/genre/
       Environment:
         Variables:
           GENRES_TABLE: !Ref GenresTable
@@ -368,7 +356,6 @@ Resources:
     Properties:
       Handler: src/handlers/genre/getGenre.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/genre/
       Environment:
         Variables:
           GENRES_TABLE: !Ref GenresTable
@@ -388,7 +375,6 @@ Resources:
     Properties:
       Handler: src/handlers/genre/listGenres.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/genre/
       Environment:
         Variables:
           GENRES_TABLE: !Ref GenresTable
@@ -408,7 +394,6 @@ Resources:
     Properties:
       Handler: src/handlers/genre/updateGenre.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/genre/
       Environment:
         Variables:
           GENRES_TABLE: !Ref GenresTable
@@ -428,7 +413,6 @@ Resources:
     Properties:
       Handler: src/handlers/genre/deleteGenre.handler
       Runtime: nodejs18.x
-      CodeUri: src/handlers/genre/
       Environment:
         Variables:
           GENRES_TABLE: !Ref GenresTable
@@ -449,8 +433,5 @@ Resources:
       StageName: api
 
 Outputs:
-  StateMachineArnOutput:
-      Value: !GetAtt BookCreationStateMachine.Arn
-      Description: ARN de la máquina de estado
   ApiGatewayUrl:
     Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/api/"

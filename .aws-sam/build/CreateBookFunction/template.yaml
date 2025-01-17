@@ -104,7 +104,6 @@ Resources:
       Environment:
         Variables:
           BOOKS_TABLE: !Ref BooksTable
-          STATE_MACHINE_ARN: !ImportValue StateMachineArn
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref BooksTable
